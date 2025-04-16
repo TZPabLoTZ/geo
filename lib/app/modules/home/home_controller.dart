@@ -4,22 +4,23 @@ import 'package:get/get.dart';
 
 import '../../infra/models/location_model.dart';
 import '../../infra/models/product_model.dart';
+import '../location/location_page.dart';
 
 class HomeController extends GetxController {
   List<ProductModel> allProducts = [];
-  List<ProductModel> productList = [];
-  double raioKm = 5;
+  List<ProductModel> filteredProducts = [];
+  double searchRadiusKm = 5;
 
-  double minhaLat = -12.55043;
-  double minhaLong = -55.74707;
+  double userLatitude = -12.55043;
+  double userLongitude = -55.74707;
 
   @override
   void onInit() {
     super.onInit();
-    carregarProdutosComLocalizacao();
+    loadProductsAndApplyFilter();
   }
 
-  Future<void> carregarProdutosComLocalizacao() async {
+  Future<void> loadProductsAndApplyFilter() async {
     allProducts = [
       ProductModel(
         name: 'Loja A',
@@ -28,8 +29,8 @@ class HomeController extends GetxController {
         description: '1 km de distância',
         listImages: ['assets/images/lojas.png'],
         location: LocationModel(
-          latitude: minhaLat + 0.009,
-          longitude: minhaLong + 0.009,
+          latitude: userLatitude + 0.009,
+          longitude: userLongitude + 0.009,
         ),
       ),
       ProductModel(
@@ -39,8 +40,8 @@ class HomeController extends GetxController {
         description: '3 km de distância',
         listImages: ['assets/images/lojas.png'],
         location: LocationModel(
-          latitude: minhaLat + 0.017,
-          longitude: minhaLong + 0.017,
+          latitude: userLatitude + 0.017,
+          longitude: userLongitude + 0.017,
         ),
       ),
       ProductModel(
@@ -50,8 +51,8 @@ class HomeController extends GetxController {
         description: '5 km de distância',
         listImages: ['assets/images/lojas.png'],
         location: LocationModel(
-          latitude: minhaLat + 0.035,
-          longitude: minhaLong + 0.035,
+          latitude: userLatitude + 0.035,
+          longitude: userLongitude + 0.035,
         ),
       ),
       ProductModel(
@@ -61,8 +62,8 @@ class HomeController extends GetxController {
         description: '7 km de distância',
         listImages: ['assets/images/lojas.png'],
         location: LocationModel(
-          latitude: minhaLat + 0.048,
-          longitude: minhaLong + 0.048,
+          latitude: userLatitude + 0.048,
+          longitude: userLongitude + 0.048,
         ),
       ),
       ProductModel(
@@ -72,57 +73,91 @@ class HomeController extends GetxController {
         description: '9 km de distância',
         listImages: ['assets/images/lojas.png'],
         location: LocationModel(
-          latitude: minhaLat + 0.064,
-          longitude: minhaLong + 0.064,
+          latitude: userLatitude + 0.064,
+          longitude: userLongitude + 0.064,
         ),
       ),
     ];
 
-    filtrarProdutosPeloRaio();
+    filterProductsByRadius();
   }
 
-  void filtrarProdutosPeloRaio() {
-    productList =
-        allProducts.where((produto) {
-          final lat = produto.location?.latitude;
-          final long = produto.location?.longitude;
+  void filterProductsByRadius() {
+    filteredProducts =
+        allProducts.where((product) {
+          final productLat = product.location?.latitude;
+          final productLong = product.location?.longitude;
 
-          if (lat == null || long == null) return false;
+          if (productLat == null || productLong == null) return false;
 
-          final distancia = calcularDistanciaKm(minhaLat, minhaLong, lat, long);
-          return distancia <= raioKm;
+          final distanceKm = calculateDistanceBetweenPointsKm(
+            userLatitude,
+            userLongitude,
+            productLat,
+            productLong,
+          );
+
+          return distanceKm <= searchRadiusKm;
         }).toList();
 
     update();
   }
 
-  void updateRaio(double value) {
-    raioKm = value;
-    filtrarProdutosPeloRaio();
+  void updateSearchRadius(double newRadius) {
+    searchRadiusKm = newRadius;
+    filterProductsByRadius();
     update();
   }
 
-  double calcularDistanciaKm(
+  double calculateDistanceBetweenPointsKm(
     double lat1,
     double lon1,
     double lat2,
     double lon2,
   ) {
-    const double R = 6371;
-    final double dLat = _degToRad(lat2 - lat1);
-    final double dLon = _degToRad(lon2 - lon1);
-    final double a =
-        sin(dLat / 2) * sin(dLat / 2) +
-        cos(_degToRad(lat1)) *
-            cos(_degToRad(lat2)) *
-            sin(dLon / 2) *
-            sin(dLon / 2);
-    final double c = 2 * atan2(sqrt(a), sqrt(1 - a));
-    final double distancia = R * c;
-    return distancia;
+    const double earthRadiusKm = 6371;
+    final double deltaLatRad = degreesToRadians(lat2 - lat1);
+    final double deltaLonRad = degreesToRadians(lon2 - lon1);
+
+    final double haversineFormulaA =
+        sin(deltaLatRad / 2) * sin(deltaLatRad / 2) +
+        cos(degreesToRadians(lat1)) *
+            cos(degreesToRadians(lat2)) *
+            sin(deltaLonRad / 2) *
+            sin(deltaLonRad / 2);
+
+    final double haversineFormulaC =
+        2 * atan2(sqrt(haversineFormulaA), sqrt(1 - haversineFormulaA));
+    final double distanceKm = earthRadiusKm * haversineFormulaC;
+
+    return distanceKm;
   }
 
-  double _degToRad(double grau) {
-    return grau * (pi / 180);
+  double degreesToRadians(double degrees) {
+    return degrees * (pi / 180);
+  }
+
+  Future<void> navigateToLocationSelection() async {
+    final result = await Get.toNamed(
+      LocationPage.route,
+      arguments: {
+        'latitude': userLatitude,
+        'longitude': userLongitude,
+        'radius': searchRadiusKm,
+      },
+    );
+
+    if (result != null && result is Map<String, dynamic>) {
+      if (result.containsKey('latitude') && result.containsKey('longitude')) {
+        userLatitude = result['latitude'];
+        userLongitude = result['longitude'];
+      }
+
+      if (result.containsKey('radius')) {
+        searchRadiusKm = result['radius'];
+      }
+
+      filterProductsByRadius();
+    }
   }
 }

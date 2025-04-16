@@ -1,5 +1,6 @@
 import 'package:get/get.dart';
 
+import 'modules/home/home_controller.dart';
 import 'modules/home/home_page.dart';
 import 'modules/location/location_page.dart';
 import 'modules/product_details/product_details_page.dart';
@@ -10,7 +11,13 @@ class AppRoutes {
 
   static List<GetPage> pages = [
     GetPage(name: SplashPage.route, page: () => const SplashPage()),
-    GetPage(name: HomePage.route, page: () => const HomePage()),
+    GetPage(
+      name: HomePage.route,
+      page: () => const HomePage(),
+      binding: BindingsBuilder(() {
+        Get.put(HomeController());
+      }),
+    ),
     GetPage(
       name: ProductDetailsPage.route,
       page: () => const ProductDetailsPage(),

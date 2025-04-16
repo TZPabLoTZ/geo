@@ -1,117 +1,118 @@
 import 'package:flutter/material.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:free_map/free_map.dart';
+import 'package:get/get.dart';
 
-class LocationPage extends StatefulWidget {
+import '../../theme/app_colors.dart';
+import '../../widgets/app_button_default.dart';
+import 'location_controller.dart';
+
+class LocationPage extends StatelessWidget {
   const LocationPage({super.key});
 
   static const route = '/location_page';
 
   @override
-  State<LocationPage> createState() => _LocationPageState();
-}
-
-class _LocationPageState extends State<LocationPage> {
-  GoogleMapController? mapController;
-  LatLng center = LatLng(-11.5442, -55.7211);
-  double raio = 4.3;
-  int tipoRaio = 1;
-
-  @override
   Widget build(BuildContext context) {
+    final controller = Get.put(LocationController());
+
     return Scaffold(
       appBar: AppBar(
-        title: Text('Adicionar localização'),
-        actions: [
-          IconButton(
-            icon: Icon(Icons.send),
-            onPressed: () {
-              // Aplicar
-            },
-          ),
-        ],
+        title: const Text('Adicionar localização'),
+        centerTitle: true,
       ),
       body: Column(
         children: [
           Padding(
             padding: const EdgeInsets.all(8.0),
             child: TextField(
+              controller: TextEditingController(),
               decoration: InputDecoration(
-                hintText: 'Pesquisar',
-                prefixIcon: Icon(Icons.search),
+                hintText: 'Pesquisar endereço',
+                prefixIcon: const Icon(Icons.search),
+                suffixIcon: IconButton(
+                  icon: const Icon(Icons.clear),
+                  onPressed: () {},
+                ),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(25),
                 ),
               ),
+              onSubmitted: (value) {
+                if (value.isNotEmpty) {
+                  controller.getCoordinatesFromAddress(value);
+                }
+              },
             ),
           ),
           Expanded(
-            child: Stack(
-              children: [
-                GoogleMap(
-                  initialCameraPosition: CameraPosition(
-                    target: center,
-                    zoom: 14,
-                  ),
-                  circles: {
-                    Circle(
-                      circleId: CircleId('raio'),
-                      center: center,
-                      radius: raio * 1000,
-                      fillColor: Colors.blue.withOpacity(0.2),
-                      strokeColor: Colors.blue,
-                      strokeWidth: 2,
+            child: GetBuilder<LocationController>(
+              builder:
+                  (controller) => FmMap(
+                    mapController: controller.mapController,
+                    mapOptions: MapOptions(
+                      minZoom: 1,
+                      maxZoom: 18,
+                      initialZoom: controller.currentZoomLevel,
+                      initialCenter: controller.userLocation,
+                      onTap:
+                          (pos, point) =>
+                              controller.getAddressFromCoordinates(point),
+                      onPositionChanged: controller.onMapPositionChanged,
                     ),
-                  },
-                  onMapCreated: (controller) => mapController = controller,
-                  myLocationEnabled: true,
-                ),
-                Center(
-                  child: Icon(Icons.location_pin, size: 40, color: Colors.blue),
-                ),
-              ],
+                    markers: controller.locationMarkers,
+                  ),
             ),
           ),
           Column(
             children: [
-              RadioListTile(
-                title: Text("Raio sugerido"),
-                value: 0,
-                groupValue: tipoRaio,
-                onChanged: (value) => setState(() => tipoRaio = value!),
-              ),
-              RadioListTile(
-                title: Text("Raio personalizado"),
-                value: 1,
-                groupValue: tipoRaio,
-                onChanged: (value) => setState(() => tipoRaio = value!),
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  vertical: 4,
+                  horizontal: 12,
+                ),
+                child: Column(
+                  children: [
+                    GetBuilder<LocationController>(
+                      builder:
+                          (controller) =>
+                              Text('Raio: ${controller.searchRadiusKm} km'),
+                    ),
+                    GetBuilder<LocationController>(
+                      builder:
+                          (controller) => Slider(
+                            min: 1,
+                            max: 10,
+                            value: controller.searchRadiusKm,
+                            divisions: 9,
+                            activeColor: AppColors.secondary,
+                            label:
+                                '${controller.searchRadiusKm.toStringAsFixed(1)} km',
+                            onChanged: controller.updateSearchRadius,
+                          ),
+                    ),
+                  ],
+                ),
               ),
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                child: Slider(
-                  min: 1,
-                  max: 20,
-                  divisions: 19,
-                  value: raio,
-                  label: "${raio.toStringAsFixed(1)} km",
-                  onChanged: (value) => setState(() => raio = value),
+                padding: const EdgeInsets.all(8),
+                child: AppButtonDefault(
+                  onTap: () {
+                    Get.back(
+                      result: {
+                        'center': controller.userLocation,
+                        'radius': controller.searchRadiusKm,
+                        'latitude': controller.userLocation.latitude,
+                        'longitude': controller.userLocation.longitude,
+                      },
+                    );
+                  },
+                  text: "Aplicar localização",
+                  fontSize: 18,
+                  paddingVertical: 18,
+                  isValid: true,
                 ),
               ),
-              Text("${raio.toStringAsFixed(1)} km"),
-              SizedBox(height: 10),
-              ElevatedButton(
-                onPressed: () {
-                  // salvar raio e posição
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blue,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  minimumSize: Size(double.infinity, 48),
-                ),
-                child: Text("Aplicar"),
-              ),
-              SizedBox(height: 10),
+              const SizedBox(height: 10),
             ],
           ),
         ],
