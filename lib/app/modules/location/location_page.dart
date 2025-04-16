@@ -3,6 +3,7 @@ import 'package:free_map/free_map.dart';
 import 'package:get/get.dart';
 
 import '../../theme/app_colors.dart';
+import '../../widgets/app_bar_default.dart';
 import '../../widgets/app_button_default.dart';
 import 'location_controller.dart';
 
@@ -16,10 +17,7 @@ class LocationPage extends StatelessWidget {
     final controller = Get.put(LocationController());
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Adicionar localização'),
-        centerTitle: true,
-      ),
+      appBar: AppBarDefault(text: "Adicionar localização"),
       body: Column(
         children: [
           Padding(
