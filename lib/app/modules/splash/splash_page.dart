@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../home/home_page.dart';
+import '../login/login_page.dart';
 
 class SplashPage extends StatefulWidget {
   const SplashPage({super.key});
@@ -19,7 +19,7 @@ class _SplashPageState extends State<SplashPage> {
 
     Future.microtask(() async {
       Future.delayed(const Duration(seconds: 3)).then((value) async {
-        Get.offAllNamed(HomePage.route);
+        Get.offAllNamed(LoginPage.route);
       });
     });
   }

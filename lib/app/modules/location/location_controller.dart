@@ -16,8 +16,8 @@ class LocationController extends GetxController {
 
   List<Marker> locationMarkers = <Marker>[];
 
-  static const double EARTH_RADIUS_KM = 6371.0;
-  static const double EARTH_CIRCUMFERENCE_KM = 2 * pi * EARTH_RADIUS_KM;
+  static const double earthRadiusKm = 6371.0;
+  static const double earthCircumferenceKm = 2 * pi * earthRadiusKm;
 
   @override
   void onInit() {
@@ -72,7 +72,7 @@ class LocationController extends GetxController {
     const double pinIconSize = 40;
 
     final double metersPerPixel =
-        (EARTH_CIRCUMFERENCE_KM * 1000) / (256 * pow(2, currentZoomLevel));
+        (earthCircumferenceKm * 1000) / (256 * pow(2, currentZoomLevel));
     final double radiusInPixels = (searchRadiusKm * 1000) / metersPerPixel;
 
     locationMarkers = [
@@ -89,7 +89,7 @@ class LocationController extends GetxController {
               height: radiusInPixels * 1.5,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: Colors.blue.withOpacity(0.3),
+                color: Colors.blue.withValues(alpha: 0.3),
                 border: Border.all(color: Colors.blue, width: 2),
               ),
             ),
